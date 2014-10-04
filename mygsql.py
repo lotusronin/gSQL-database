@@ -33,7 +33,6 @@ class MyContactsClient:
 		for f in flist:
 			jfile = open(f)
 			data = json.load(jfile)
-			#print(data["installed"]["redirect_uris"][0])
 			if data["installed"]["redirect_uris"] != '':
 				flow = flow_from_clientsecrets(f,SCOPE,data["installed"]["redirect_uris"][0])
 				auth_uri = flow.step1_get_authorize_url()
@@ -55,20 +54,20 @@ class MyContactsClient:
 		      			full_name=gdata.data.FullName(text=key))
 				new_contact.content = atom.data.Content(text=content)
 				contact_entry = self.gd_client.CreateContact(new_contact)
+			file_obj.close()
 
 	def getFromDB(self, key):
-		#query = gdata.contacts.client.ContactsQuery()
-		#query.group = key
-		#name = gdata.data.FullName(key)
-		#feed = self.gd_client.GetContacts()
-		#for contact in feed.entry:
-		#	if(name == contact.name.full_name):
-		#		print(contact.name.full_name)
-
 		name = gdata.data.FullName(key)
 		feed = self.gd_client.GetContacts()
 		for contact in feed.entry:
 			if(str(name) == str(contact.name.full_name)):
+				file_obj = open(key, "w")
+				s = str(contact.content)
+				i1 = s.find(">",0)
+				i2 = s.find("<",i1)
+				print(s[i1+1:i2])
+				file_obj.write(s[i1+1:i2])
+				file_obj.close()
 				return contact
 		return None
 
@@ -82,36 +81,19 @@ class MyContactsClient:
 		return False
 
 
-# def authMe():
-
-	
-
-# 	auth_token = gdata.gauth.OAuth2Token(client_id=CLIENT_ID, client_secret=CLIENT_SECRET, scope=SCOPE, user_agent=USER_AGENT)
-# 	APPLICATION_REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob'
-# 	authorize_url = auth_token.generate_authorize_url(redirect_uri=APPLICATION_REDIRECT_URI, client_id=CLIENT_ID)
-# 	print(authorize_url)
-# 	#input()
-# 	return auth_token
-
-# def loadFile(filename):
-#	file_obj = open(filename, "r")
-#	return filename
-
-
 login = raw_input('login: ')
 passw = getpass.getpass()
 mcc = MyContactsClient(login, passw)
 gc_client = mcc.startClient()
-#creds = mcc.getID()
-#gd_client = gdata.contacts.client.ContactsClient(source='SAB RG Hackathon')
-#gc_client = creds.authorize(gc_client)
-#print(gc_client.GetContacts())
 
-#mcc.existsDB("Test Entry")
 
-data = "test.txt"
-mcc.uploadToDB(data)
-c = mcc.getFromDB(data)
-if(c is not None):
-	print("Contact Retrieved")
-	print(c)
+print('\nUpload file (1) or Get file (2)')
+option = int(raw_input())
+data = raw_input('file name: ')
+if(option == 1):
+	mcc.uploadToDB(data)
+elif(option == 2):
+	c = mcc.getFromDB(data)
+	if(c is not None):
+		print("Contact Retrieved")
+		print(c)
